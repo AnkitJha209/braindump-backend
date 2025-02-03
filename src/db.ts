@@ -18,14 +18,15 @@ export const connectDB = async () => {
 // ---------------- user schema --------------------------------
 
 interface User{
-    name: string,
+    username: string,
     password: string,
 }
 
 const userSchema =  new Schema<User>({
-    name: {
+    username: {
         type: String,
         requried: true,
+        unique: true,
     },
     password: {
         type: String,
