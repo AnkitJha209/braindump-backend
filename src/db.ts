@@ -43,7 +43,7 @@ interface Content{
     link: string,
     type: "tweet" | "youtube" | "document" | "link",
     title: string,
-    tag?: Schema.Types.ObjectId[],
+    tag?: [string],
     userId: Schema.Types.ObjectId,
 }
 const contentSchema = new Schema<Content>({
