@@ -3,7 +3,7 @@ import { Content, User } from "./db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { auth } from "./middleware.js";
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
 export const route = express.Router();
 
@@ -100,7 +100,7 @@ route.post(
   }
 );
 
-// ------- content routes ---------------
+// ------- content routes
 
 route.post("/create-content", auth, async (req: AuthRequest, res: Response) => {
   try {
@@ -151,3 +151,118 @@ route.post("/create-content", auth, async (req: AuthRequest, res: Response) => {
     return;
   }
 });
+
+route.get("/content", auth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.user;
+    const uID = new mongoose.Types.ObjectId(id);
+    const contents = await Content.find({ userId: uID }).populate("tag").exec();
+    if (!contents) {
+      res.status(404).json({
+        success: false,
+        message: "NO content found",
+      });
+      return;
+    }
+    res.status(200).json({
+      success: true,
+      message: "Content fetched",
+      contents,
+    });
+    return;
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Cannot get content",
+    });
+  }
+});
+
+route.get("/get-content/:id", auth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const uID = mongoose.Types.ObjectId.createFromHexString(id);
+    const userUID = mongoose.Types.ObjectId.createFromHexString(userId);
+
+    const content = await Content.findById({ _id: uID }).populate("tag").exec();
+
+    if (!content) {
+      res.status(404).json({
+        success: false,
+        message: "No content found",
+      });
+      return;
+    }
+
+    if (content?.userId !== userUID) {
+      res.status(401).json({
+        success: false,
+        message: "Not Accessible",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Content Fetched",
+      content,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Cannot get the content",
+    });
+    return;
+  }
+});
+
+route.delete(
+  "/delete-content",
+  auth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.body;
+      const userId = req.user.id;
+      if (!id) {
+        res.status(404).json({
+          success: false,
+          message: "Need Id to delete the content",
+        });
+        return;
+      }
+      const UID = mongoose.Types.ObjectId.createFromHexString(id);
+      const userUID = mongoose.Types.ObjectId.createFromHexString(userId);
+      const content = await Content.findById(UID);
+      if (!content) {
+        res.status(404).json({
+          success: false,
+          message: "No Content found",
+        });
+        return;
+      }
+      if (userUID.toString() !== content.userId.toString()) {
+        res.status(401).json({
+          success: false,
+          message: "Not authorized to delete the content",
+        });
+        return;
+      }
+      await Content.findByIdAndDelete(UID);
+      res.status(200).json({
+        success: true,
+        message: "Content Delete Successfully",
+      });
+      return;
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        success: false,
+        message: "Cannot delete content",
+      });
+      return;
+    }
+  }
+);

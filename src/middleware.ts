@@ -17,7 +17,6 @@ export const auth = (req: AuthRequest, res: Response, next: NextFunction) => {
         }
         try{
             const decode = jwt.verify(token, "JWT_SECRET")
-            console.log(decode)
             req.user = decode
         }catch(e){
             res.status(401).json({
@@ -34,3 +33,4 @@ export const auth = (req: AuthRequest, res: Response, next: NextFunction) => {
         })
     }
 }
+

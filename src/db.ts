@@ -17,12 +17,7 @@ export const connectDB = async () => {
 
 // ---------------- user schema --------------------------------
 
-interface User{
-    username: string,
-    password: string,
-}
-
-const userSchema =  new Schema<User>({
+const userSchema =  new Schema({
     username: {
         type: String,
         requried: true,
@@ -34,19 +29,12 @@ const userSchema =  new Schema<User>({
     }
 })
 
-export const User = mongoose.model<User>('User', userSchema)
+export const User = mongoose.model('User', userSchema)
 
 
 // ------------ content schema ------------------
 
-interface Content{
-    link: string,
-    type: "tweet" | "youtube" | "document" | "link",
-    title: string,
-    tag?: [string],
-    userId: Schema.Types.ObjectId,
-}
-const contentSchema = new Schema<Content>({
+const contentSchema = new Schema({
     link: {
         type: String,
         required: true,
@@ -70,31 +58,24 @@ const contentSchema = new Schema<Content>({
     }
 })
 
-export const Content = mongoose.model<Content>('Content', contentSchema)
+export const Content = mongoose.model('Content', contentSchema)
 
 
 // --------------- tag schema ------------------
 
-interface Tag{
-    title: string,
-}
-const tagSchema = new Schema<Tag>({
+
+const tagSchema = new Schema({
     title:{
         type: String
     }
 })
 
-export const Tag = mongoose.model<Tag>('Tag', tagSchema)
+export const Tag = mongoose.model('Tag', tagSchema)
 
 
 // --------------- link schema -------------------
 
-interface Link{
-    hash: string,
-    userId: Schema.Types.ObjectId
-}
-
-const linkSchema = new Schema<Link>({
+const linkSchema = new Schema({
     hash:{
         type: String,
         required: true,
@@ -106,5 +87,5 @@ const linkSchema = new Schema<Link>({
     }
 })
 
-export const Link = mongoose.model<Link>('Link', linkSchema)
+export const Link = mongoose.model('Link', linkSchema)
 
