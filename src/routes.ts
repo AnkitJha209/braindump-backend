@@ -1,9 +1,10 @@
 import express, { Request, response, Response } from "express";
-import { Content, User } from "./db.js";
+import { Content, Link, User } from "./db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { auth } from "./middleware.js";
 import mongoose, { mongo } from "mongoose";
+import { randomHash } from "./utils.js";
 
 export const route = express.Router();
 
@@ -266,3 +267,98 @@ route.delete(
     }
   }
 );
+
+
+route.post('/share-brain', auth, async (req: AuthRequest, res: Response) => {
+  try{
+    const {share} = req.body
+    if(share){
+      const existingHash = await Link.findOne({userId: req.user.id})
+      if(existingHash){
+        res.status(200).json({
+          success: true,
+          message: `share/${existingHash.hash}`
+        })
+        return;
+      }
+      const newHash = await Link.create({
+        userId: req.user.id,
+        hash: randomHash(10)
+      })
+      res.status(200).json({
+        success: true,
+        message: `share/${newHash.hash}`
+      })
+      return;
+    }
+    else{
+      await Link.deleteOne({
+        userId: req.user.id
+      })
+      res.status(200).json({
+        success : true,
+        message: "Remove Link Successfully"
+      })
+      return;
+    }
+
+  }catch(err){
+    console.log(err)
+    res.status(500).json({
+      success: false,
+      message: 'Cannot share brain'
+    })
+    return ;
+  }
+})
+
+route.get('/share/:sharedLink', async (req: Request, res: Response) => {
+  try{
+    const sharedLink = req.params.sharedLink
+    if(!sharedLink){
+      res.status(404).json({
+        success: false,
+        message: "Link Not Found"
+      })
+      return ;
+    }
+
+    const hash = await Link.findOne({
+      hash: sharedLink
+    })
+    if(!hash){
+      res.status(404).json({
+        success: false,
+        message: "No Content found"
+      })
+      return ;
+    }
+
+    const content = await Content.find({
+      userId: hash.userId
+    })
+    const user = await User.findById({
+      _id : hash.userId
+    })
+
+    if(!user){
+      res.status(404).json({
+        success: false,
+        message: "No user found"
+      })
+      return ;
+    }
+    res.status(200).json({
+      success: true,
+      username: user.username,
+      content
+    })
+
+  }catch(e){
+    console.log(e)
+    res.status(500).json({
+      success: false,
+      message: "Unable to find the shared link"
+    })
+  }
+})
